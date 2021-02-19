@@ -11,7 +11,6 @@ int main(int argc, char **argv){
 
   int p, n_iti = 1;
 
-
   if(argc != 2 || strspn(argv[1], "0123456789") != strlen(argv[1])) {
     fprintf(stderr, "Argumentos erroneos, solo se permite 1 y debe ser integer\n");
     exit(-1);
