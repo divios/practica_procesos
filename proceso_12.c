@@ -18,6 +18,7 @@ int main(int argc, char** argv){
         }
         else if(children[i]==0){
             /*exec el codigo*/
+            execl("/Escritorio", "/Escritorio/proceso_11.c", (char*)4, (char*)NULL);
             exit(0);
         }
     }
