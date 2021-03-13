@@ -99,7 +99,7 @@ void killChild(childs_t child[]) {
         kill(child[i].pid, SIGKILL);
         pid = wait(&status);
         printf("  %2i  %6i  %12s  %12i  %12i\n",
-               child[i].argv, child[i].pid, ptr, child[i].n_times, status);
+               child[i].argv, pid/*child[i].pid*/, ptr, child[i].n_times, status);
     }
 }
 
