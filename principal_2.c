@@ -19,7 +19,7 @@ void intHandler(int signal);
 void alarmHandler(int signal);
 
 pid_t childs[5];
-int alarmFlag = 0;
+int alarmFlag = 0, killFlag = 0;
 
 int main(int argc, char **argv){
 
@@ -28,7 +28,7 @@ int main(int argc, char **argv){
 
     for (int i = 0; i < 5; i++) {
         if ( (childs[i] = fork()) < 0) {
-            printf("Error while creating child %i\n", childs[i]);
+            fprintf(stderr, "Error while creating child %i\n", childs[i]);
             for (int j = 0; j < i; j++) {  //matamos todos los hijos creados hasta ahora
                 int status;
                 kill(childs[j], SIGKILL);
@@ -52,8 +52,8 @@ int main(int argc, char **argv){
     kill(childs[current], SIGCONT);
 
     while(1) {
-        if (alarmFlag == -1) {
-            printf("hola\n");
+        if (killFlag == 1) {
+            alarm(0);
             break;
         }
         else if (alarmFlag == 0) continue;
@@ -72,7 +72,7 @@ int main(int argc, char **argv){
 }
 
 void intHandler(int signal) {
-    alarmFlag = -1;
+    killFlag = 1;
 }
 
 void alarmHandler(int signal) {
@@ -85,6 +85,6 @@ void killChild(int child[]) {
     for(int i=0; i < 5; i++) {
         kill(child[i], SIGKILL);
         pid = wait(&status);
-        printf("Child with pid %ld exited with status %i\n",(long)pid, status);
+        fprintf(stderr, "Child with pid %ld exited with status %i\n", (long)pid, status);
     }
 }
