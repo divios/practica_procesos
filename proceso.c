@@ -16,7 +16,6 @@ int main(int argc, char **argv){
 
   int p, n_iti = 1;
   signal(SIGALRM, alarmHandler);
-  signal(SIGKILL, killHandler);
 
   if(argc != 2 || strspn(argv[1], "0123456789") != strlen(argv[1])) {
     fprintf(stderr, "Argumentos erroneos, solo se permite 1 y debe ser integer\n");
@@ -35,22 +34,16 @@ int main(int argc, char **argv){
   }
 
   while (1) {
-      if (alarmFlag == -1) {
-          break;
-      } else if (alarmFlag == 0) continue;
+      if (alarmFlag == 0) continue;
 
       alarmFlag = 0;
       fprintf(stderr, "[%i] Proceso %i [%s] iter %i \n", getpid(), p, points, n_iti);
       n_iti++;
       alarm(1);
   }
-  exit(0);
 }
 
 void alarmHandler(int signal) {
     alarmFlag = 1;
 }
 
-void killHandler(int signal) {
-    alarmFlag = -1;
-}
