@@ -1,6 +1,3 @@
-//
-// Created by student on 18/2/21.
-//
 
 #include <stdio.h>
 #include <string.h>
@@ -18,21 +15,21 @@ char* itoa(int i) {
     return str;
 }
 
-void killChild(int child[]) {
-    for(int i=0; i < 5; i++) {
-        int status;
-        kill(child[i], SIGKILL);
-        wait(&status);
-    }
-}
+void killChild(int child[]);
+void intHandler(int signal);
+void alarmHandler(int signal);
 
-int main(int argc, char **argv){
+int alarmFlag = 0;
+pid_t childs[5];
 
-    pid_t childs[5];
+int main(int argc, char **argv) {
+
+    signal(SIGINT, intHandler);
+    signal(SIGALRM, alarmHandler);
 
     for (int i = 0; i < 5; i++) {
         if ( (childs[i] = fork()) < 0) {
-            printf("Error al crear el hijo n %i", i);
+            printf("Error while creating child %i\n", childs[i]);
             for (int j = 0; j < i; j++) {  //matamos todos los hijos creados hasta ahora
                 int status;
                 kill(childs[j], SIGKILL);
@@ -47,7 +44,27 @@ int main(int argc, char **argv){
         }
     }
 
-    sleep(4);  // Los segundos que queremos que dure el programa
+    alarm(5); //los segundos que quieres que dure el programa
+    while(1) {
+        if (alarmFlag == 1) break;
+    }
     killChild(childs);
+}
 
+void intHandler(int signal) {
+    alarmFlag = 1;
+}
+
+void alarmHandler(int signal) {
+    alarmFlag = 1;
+}
+
+void killChild(int child[]) {
+    int status;
+    pid_t pid;
+    for(int i=0; i < 5; i++) {
+        kill(child[i], SIGKILL);
+        pid = wait(&status);
+        printf("Child with pid %ld exited with status %i\n",(long)pid, status);
+    }
 }
