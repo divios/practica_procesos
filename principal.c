@@ -19,36 +19,35 @@ char* itoa(int i) {
 }
 
 void killChild(int child[]) {
-    for(int i=0; i < (sizeof(*child) / sizeof(int)); i++) {
+    for(int i=0; i < 5; i++) {
+        int status;
         kill(child[i], SIGKILL);
+        wait(&status);
     }
 }
 
 int main(int argc, char **argv){
 
-    int child[] = {-1, -1, -1, -1, -1}, error_flag = 0;
+    pid_t childs[5];
 
-    for(int i = 0; i < 5; i++) {
-        if ((child[i] = fork()) == 0) {
+    for (int i = 0; i < 5; i++) {
+        if ( (childs[i] = fork()) < 0) {
+            printf("Error al crear el hijo n %i", i);
+            for (int j = 0; j < i; j++) {  //matamos todos los hijos creados hasta ahora
+                int status;
+                kill(childs[j], SIGKILL);
+                wait(&status);
+            }
+            exit(0);
+        }
+        if (childs[i] == 0) {  //si somos el hijo
             char *args[] = {"./proceso", "", NULL};
             args[1] = itoa(i + 1);
             execvp(args[0], args);
         }
-        else {
-            kill(child[i], 0);  /* Checks if process alive */
-            if (errno == ESRCH) {
-                error_flag = 1;
-                break;
-            }
-        }
     }
 
-    if (error_flag) {   /* If some child wasn't created */
-        killChild(child);
-        exit(-1);
-    }
-
-    sleep(3);
-    killChild(child);
+    sleep(4);  // Los segundos que queremos que dure el programa
+    killChild(childs);
 
 }
