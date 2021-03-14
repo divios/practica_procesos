@@ -20,14 +20,19 @@ void changeStatus(childs_t *child, int status) {
         child -> status = 1;
         child -> n_times++;
         kill(child->pid, SIGCONT);
+    } else if (status == -1) {
+        child -> status = -1;
+        kill(child->pid, SIGKILL);
     }
 }
 
 void getStatusStr(childs_t child, char *str) {
     if (child.status == 0) {
         str = strcpy(str, "READY");
-    } else {
+    } else if (child.status == 1) {
         str = strcpy(str, "RUNNING");
+    } else if (child.status == -1) {
+        str = strcpy(str, "DELETED");
     }
 }
 
