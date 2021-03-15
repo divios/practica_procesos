@@ -58,13 +58,17 @@ int alarmFlag = 0, killFlag = 0, menuFlag = 0,
 
 
 int main(int argc, char **argv) {
-
+    /*************************************************************************************
+    Declaraciones para llamar a las señales y que funcionen en caso de que se introduzca 
+    CTRL + C, pase el tiempo que está como parámetro en la función alarm() o CTRL + \  
+    **************************************************************************************/
     signal(SIGINT, intHandler);
     signal(SIGALRM, alarmHandler);
     signal(SIGQUIT, &menuHandler);
 
     for (int i = 0; i < 5; i++) {
         childs[i].argv = i;
+        //En caso de que la función fork() retorne un número negativo será error y se notifica.
         if ((childs[i].pid = fork()) < 0) {
             fprintf(stderr, "Error while creating child %i\n", childs[i].pid);
             for (int j = 0; j < i; j++) {  //matamos todos los hijos creados hasta ahora
@@ -84,9 +88,15 @@ int main(int argc, char **argv) {
         kill(childs[i].pid, SIGSTOP); //paramos ese proceso
 
     }
-
+    /*************************************************************************
+    En este caso la función alarm() tiene como parámetro 1 segundo porque en 
+    el enunciado nos pedían que el algoritmo Round Robin cambiase cada segundo.
+    Tras ese segundo, cambiamos al siguiente proceso.
+    **************************************************************************/
     alarm(1);
     changeStatus(&childs[0], 1);
+    
+    //Bucle infinito para controlar la ejecución del programa
 
     while (1) {
         if (menuFlag == 1) {
@@ -123,7 +133,12 @@ int main(int argc, char **argv) {
     exit(0);
 
 }
+/***************************************************************************
+A partir de aquí, salimos de la función main para especificar y definir las
+funciones definidas en éste.
+***************************************************************************/
 
+//Despliega la información de los procesos.
 void printInfo() {
     pid_t pid;
     int MYFIFO[2];
@@ -144,6 +159,11 @@ void printInfo() {
     wait(&status);
 }
 
+/***************************************************************************
+Manejadores de las distintas señales SIGINT, SIGALARM y SIGQUIT, respectiva-
+mente. Alteran los flags necesarios para la correcta ejecución del código.
+***************************************************************************/
+
 void intHandler(int signal) {
     if (menuFlag) return;
     killFlag = 1;
@@ -152,7 +172,7 @@ void intHandler(int signal) {
 void alarmHandler(int signal) {
     alarmFlag = 1;
 }
-
+//Función programada para que mate a todos los hijos cuando sea necesario.
 void killChild(childs_t child[]) {
     for (int i = 0; i < 5; i++) {
         if (child[i].status == -1) continue;
@@ -164,7 +184,10 @@ void killChild(childs_t child[]) {
 void menuHandler(int signal) {
     menuFlag = 1;
 }
-
+/********************************************
+Función para decirle al programa qué proceso 
+es el siguiente que le toca ejecutar
+********************************************/
 int processNext(pid_t pid) {
 
     if (deleted == 5) return 1;
@@ -184,7 +207,14 @@ int processNext(pid_t pid) {
         if (n >= 5) n = 0;
     }
 }
-
+/************************************************************************************
+Funciones que manejan las señales para obtener los menús. La primera 
+muestra el estado del proceso que se está ejecutando en este momento y 
+da la opción de eliminar un proceso con sus respectivas excepciones (proceso
+ya creado, número de proceso no válido, etc...). Después se ejecuta el menú 2 en la
+función menuHandler_2() para que el usuario decida si quiere matar más procesos o 
+continuar ejecutando el programa.
+************************************************************************************/
 void menuHandler_1() {
 
     int resul;

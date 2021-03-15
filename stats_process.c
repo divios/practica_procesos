@@ -12,7 +12,11 @@
 #include "childs_struct.h"
 
 int main(int argc, char **argv){
-
+    /***********************************************************
+    En esta parte leemos de la función los procesos hijos que
+    tenemos. A partir de ahí los imprimimos como se indica en el
+    enunciado de la práctica.
+    *************************************************************/ 
     childs_t childs[5];
     read(STDIN_FILENO, childs, sizeof(childs));
 

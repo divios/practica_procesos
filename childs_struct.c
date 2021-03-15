@@ -11,7 +11,12 @@
 #include <errno.h>
 #include "childs_struct.h"
 
-
+/*******************************************************
+Funciones que manejan el estado. La primera cambia el
+estado del proceso para que se deje de ejecutar (RUNNING)
+y pase al siguiente (READY). La segunda función obtiene
+el estado del proceso que le pasamos por parámetro.
+********************************************************/ 
 void changeStatus(childs_t *child, int status) {
     if (status == 0) { //lo estamos parando
         child -> status = 0;
