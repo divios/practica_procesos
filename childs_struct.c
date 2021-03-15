@@ -23,16 +23,17 @@ void changeStatus(childs_t *child, int status) {
     } else if (status == -1) {
         child -> status = -1;
         kill(child->pid, SIGKILL);
+        wait(&child->last_status);
     }
 }
 
 void getStatusStr(childs_t child, char *str) {
     if (child.status == 0) {
-        str = strcpy(str, "READY");
+        strcpy(str, "READY");
     } else if (child.status == 1) {
-        str = strcpy(str, "RUNNING");
+        strcpy(str, "RUNNING");
     } else if (child.status == -1) {
-        str = strcpy(str, "DELETED");
+        strcpy(str, "DELETED");
     }
 }
 

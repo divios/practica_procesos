@@ -8,7 +8,7 @@
 
 
 void alarmHandler(int signal);
-void killHandler(int signal);
+void quitHandler(int signal);
 
 int alarmFlag = 1;
 
@@ -16,6 +16,7 @@ int main(int argc, char **argv){
 
   int p, n_iti = 1;
   signal(SIGALRM, alarmHandler);
+  signal(SIGQUIT, quitHandler);
 
   if(argc != 2 || strspn(argv[1], "0123456789") != strlen(argv[1])) {
     fprintf(stderr, "Argumentos erroneos, solo se permite 1 y debe ser integer\n");
@@ -45,5 +46,9 @@ int main(int argc, char **argv){
 
 void alarmHandler(int signal) {
     alarmFlag = 1;
+}
+
+void quitHandler(int signal) {
+
 }
 

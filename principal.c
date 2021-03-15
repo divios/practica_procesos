@@ -18,26 +18,50 @@ char *itoa(int i) {
     return str;
 }
 
-void killChild(childs_t child[]);
-
+// Todos los handlers
 void intHandler(int signal);
 void alarmHandler(int signal);
 void menuHandler(int signal);
 
+/*      Utilidades      */
+
+/// Itinera por la lista y manda señal de kill con el pid
+/// de cada nodo
+///
+/// @param child lista de childs_t a mandar señal
+
+void killChild(childs_t child[]);
+
+/// Imprime toda la informacion de los procesos hijos por pantalla
+/// llamando a stats_process y comunicandose a traves de un pipe
+///
+
+void printInfo();
+
+/// Procesa el siguiente proceso a ejecutarse con cada itineracion de
+/// "Round Robin" teniendo en cuanta los procesos muertos
+///
+/// @param pid - Si se mato un proceso antes, indicar su pid para decidir si cambiar de proceso.
+/// Si tan solo es para procesar el siguiente, dejar a 0
+/// @return 1 Si ya no quedan mas procesos o 0 si aun quedan
+
+int processNext(pid_t pid);
+
+/*  Funciones para manejar flujo de SIGQUIT */
 void menuHandler_1();
 void menuHandler_2();
-void printInfo();
-int processNext(pid_t pid);
 
 childs_t childs[5];
 int alarmFlag = 0, killFlag = 0, menuFlag = 0,
-        current = 0, deleted[5];
+        current = 0, deleted = 0;
+
+
 
 int main(int argc, char **argv) {
 
     signal(SIGINT, intHandler);
     signal(SIGALRM, alarmHandler);
-    signal(SIGQUIT, menuHandler);
+    signal(SIGQUIT, &menuHandler);
 
     for (int i = 0; i < 5; i++) {
         childs[i].argv = i;
@@ -66,16 +90,18 @@ int main(int argc, char **argv) {
 
     while (1) {
         if (menuFlag == 1) {
-            printf("oke\n");
             alarm(0);
-
             changeStatus(&childs[current], 0);
-            menuHandler_1();
 
-            kill(childs[current].pid, SIGCONT);
+            menuHandler_1();
+            menuFlag = 0;
+            if (processNext(0) == 1) continue;
+            fprintf(stderr,"Continuando con el programa...\n");
+
+            changeStatus(&childs[current], 1);
             alarm(1);
             alarmFlag = 0;
-            menuFlag = 0;
+
             continue;
         }
 
@@ -90,6 +116,7 @@ int main(int argc, char **argv) {
         alarm(1);
     }
 
+    char ptr[7];
     killChild(childs);
     printInfo();
 
@@ -128,6 +155,7 @@ void alarmHandler(int signal) {
 
 void killChild(childs_t child[]) {
     for (int i = 0; i < 5; i++) {
+        if (child[i].status == -1) continue;
         kill(child[i].pid, SIGKILL);
         wait(&(child[i].last_status));
     }
@@ -137,27 +165,24 @@ void menuHandler(int signal) {
     menuFlag = 1;
 }
 
-int checkProcess(pid_t pid) {
-    kill(pid, 0); // Check if process is still alive
-    if (errno == ESRCH) {
-        return -1;
-    } return 1;
-}
-
 int processNext(pid_t pid) {
-    if (pid != childs[current].pid && pid != 0) return 0;
+
+    if (deleted == 5) return 1;
+
+    if (pid != 0 &&
+    (pid != childs[current].pid)) return 0;
 
     int n = current + 1;
     if (n >= 5) n = 0;
     for (int i = 0; i < 4; i++) {
-        if (checkProcess(childs[n].pid) == 1) {
+
+        if (childs[n].status != -1) {
             current = n;
             return 0;
         }
         n++;
         if (n >= 5) n = 0;
     }
-    return 1; // if it reachs this, all are dead
 }
 
 void menuHandler_1() {
@@ -165,7 +190,7 @@ void menuHandler_1() {
     int resul;
     printInfo();
 
-    fflush(stderr);
+    //fflush(stderr);
     fprintf(stderr,"\nAhora mismo se estaba ejecutando el proceso %i\n", childs[current].pid);
     fprintf(stderr,"Introduce el numero del proceso a eliminar:\n");
 
@@ -175,21 +200,19 @@ void menuHandler_1() {
         fprintf(stderr,"El valor no es un integer\n");
         menuHandler_1();
         return;
-    } else if (resul < 0 || resul > 5) {
+    } else if ((resul < 0 && resul != -2) || resul > 4) {
         fprintf(stderr,"El valor debe estar entre el rango 0-5\n");
         menuHandler_1();
         return;
     }
 
-    if (resul == 0) {
-        fprintf(stderr,"Continuando con el programa...\n");
-        //kill(childs[current].pid, SIGCONT);
-        alarm(1);
+    if (resul == -2) {
         return;
     }
 
-    if (checkProcess(childs[resul].pid) == 1) { //is still alive
+    if (childs[resul].status != -1) { //is still alive
         changeStatus(&childs[resul], -1);
+        deleted++;
         if (processNext(childs[resul].pid) == 1) {
             fprintf(stderr,"Ya estan todos los hijos muertos, cerramos el programa...\n");
             killFlag = 1;
@@ -216,13 +239,7 @@ void menuHandler_2() {
 
     if (resul == 1) {
         menuHandler_1();
-    } else {
-        fprintf(stderr,"Continuando con el programa...\n");
-        kill(SIGCONT, childs[current].pid);
-        alarm(1);
-        menuFlag = 0;
     }
-
 }
 
 
